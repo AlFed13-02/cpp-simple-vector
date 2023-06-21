@@ -112,18 +112,16 @@ public:
     // Если перед вставкой значения вектор был заполнен полностью,
     // вместимость вектора должна увеличиться вдвое, а для вектора вместимостью 0 стать равной 1
     Iterator Insert(ConstIterator pos, Type value) {
-        if (capacity_ == 0) {
-            Reallocate(1);
-            PushBack(std::move(value));
-            return begin();
-        } else if (size_ < capacity_) {
+        assert(pos >= cbegin() && pos <= cend());
+        if (size_ < capacity_) {
             auto it = const_cast<Iterator>(pos);
             std::move_backward(it, end(), end() + 1);
             *it = std::move(value);
             ++size_;
             return it;
         } else {
-            SimpleVector tmp(capacity_ * 2);
+            size_t new_capacity = (size_ == 0 ? 1 : capacity_ * 2); 
+            SimpleVector tmp(new_capacity);
             auto it = std::move(begin(), const_cast<Iterator>(pos), tmp.begin());
             *it = std::move(value);
             std::move(const_cast<Iterator>(pos), end(), it + 1);
@@ -141,6 +139,7 @@ public:
     
     // Удаляет элемент вектора в указанной позиции
     Iterator Erase(ConstIterator pos) {
+        assert(pos >= cbegin() && pos < cend());
         auto it = const_cast<Iterator>(pos);
         std::move(it + 1, end(), it);
         --size_;
@@ -166,11 +165,13 @@ public:
 
     // Возвращает ссылку на элемент с индексом index
     Type& operator[](size_t index) noexcept {
+        assert(index < size_);
         return items_[index];
     }
 
     // Возвращает константную ссылку на элемент с индексом index
     const Type& operator[](size_t index) const noexcept {
+        assert(index < size);
         return items_[index];
     }
 
